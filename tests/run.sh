@@ -315,6 +315,10 @@ if command -v python3 >/dev/null && command -v curl >/dev/null; then
   rt_prepare researcher >/dev/null 2>&1 || tfail "second rt_prepare"
   [[ $(requests POST '/v1/agents$' | wc -l) == 1 ]] || tfail "second prepare must not POST again"
 
+  printf 'Nightly report.\n' | "$L" create --name batch --agent hermes --runtime cloud --provider openrouter --auth api-key --model m --mode unattended --job-stdin >/dev/null || tfail "create unattended cloud agent"
+  rt_prepare batch >/dev/null 2>&1 || tfail "rt_prepare unattended"
+  requests POST '/v1/agents/agt_2/wake$' | jq -e '.body.mode == "unattended"' >/dev/null || tfail "an unattended cloud agent must wake unattended"
+  rt_destroy batch >/dev/null; "$L" remove batch --yes >/dev/null
   out=$(cloud_wake researcher) && [[ $out == "researcher is awake" ]] || tfail "wake: $out"
   out=$("$L" cloud status researcher) || tfail "cloud status NAME"; grep -q "secrets: OPENROUTER_API_KEY" <<<"$out" || tfail "status: $out"
   out=$(cloud_sleep researcher) && [[ $out == "researcher is sleeping" ]] || tfail "sleep: $out"

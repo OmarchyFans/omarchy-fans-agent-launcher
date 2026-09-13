@@ -199,6 +199,8 @@ rt_prepare() { # create the cloud agent once, then wait until it is provisioned
     info "cloud agent $id created ($(jq -r '.size // "s"' <<<"$resp") machine)"
   fi
   cloud_wait_ready "$name" "$id"
+  # The API takes the mode at wake time; the console alone would start an interactive session.
+  if [[ $(profile_get "$name" mode) == unattended ]]; then cloud_wake "$name" unattended >/dev/null || fail "could not start '$name' unattended"; fi
 }
 
 cloud_wait_ready() { # cloud_wait_ready <name> <id>: until state != provisioning
